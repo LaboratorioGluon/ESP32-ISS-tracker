@@ -2,15 +2,15 @@
 #define __CALCULUS_H__
 
 typedef struct _LATLONALT{
-    double lat;
-    double lon;
-    double alt;
+    float lat;
+    float lon;
+    float alt;
 } LATLONALT;
 
 typedef struct _ECEF{
-    double x;
-    double y;
-    double z;
+    float x;
+    float y;
+    float z;
 } ECEF;
 
 typedef struct _UNE{

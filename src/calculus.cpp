@@ -25,9 +25,10 @@ double N(double sigma)
 
 void LLAtoECEF( LATLONALT lla, ECEF &ecef)
 {
-    double X = (N(lla.lat) + lla.alt )*cos(lla.lat*M_PI/180.0) * cos(lla.lon*M_PI/180.0);
-    double Y = (N(lla.lat) + lla.alt )*cos(lla.lat*M_PI/180.0) * sin(lla.lon*M_PI/180.0);
-    double Z = (N(lla.lat) + lla.alt )*sin(lla.lat*M_PI/180.0);
+    float coslat = cosf(lla.lat*M_PI/180.0);
+    double X = (N(lla.lat) + lla.alt )*coslat * cosf(lla.lon*M_PI/180.0);
+    double Y = (N(lla.lat) + lla.alt )*coslat * sinf(lla.lon*M_PI/180.0);
+    double Z = (N(lla.lat) + lla.alt )*sinf(lla.lat*M_PI/180.0);
 
     ecef.x = X;
     ecef.y = Y;
@@ -55,17 +56,26 @@ void calculateVector(LATLONALT llaDevice, LATLONALT llaTarget, result &output)
     d.y = ecefTarget.y - ecefDevice.y;
     d.z = ecefTarget.z - ecefDevice.z;
 
+    ECEF device2;
+    device2.x = ecefDevice.x * ecefDevice.x;
+    device2.y = ecefDevice.y * ecefDevice.y;
+    device2.z = ecefDevice.z * ecefDevice.z;
+
+
     //debugECEF("d", d);
+    float x2y2 = device2.x + device2.y;
+    float dxyz2 = d.x*d.x+d.y*d.y+d.z*d.z;
 
-    double cosElev = (ecefDevice.x*d.x + ecefDevice.y*d.y + ecefDevice.z*d.z) /
-         sqrt(pow(ecefDevice.x,2)+pow(ecefDevice.y,2)+ pow(ecefDevice.z,2)*(d.x*d.x+d.y*d.y+d.z*d.z));
-    double elev = acos(cosElev);
-    double degHorizonElev = 90 - (elev*180/M_PI);
 
-    double cosAzimuth = (-ecefDevice.z*ecefDevice.x*d.x - ecefDevice.z*ecefDevice.y*d.y + (ecefDevice.x*ecefDevice.x+ecefDevice.y*ecefDevice.y)*d.z) 
-            / sqrt((ecefDevice.x*ecefDevice.x+ecefDevice.y*ecefDevice.y)*(ecefDevice.x*ecefDevice.x+ecefDevice.y*ecefDevice.y+ecefDevice.z*ecefDevice.z)*(d.x*d.x+d.y*d.y+d.z*d.z));
-    double sinAzimuth = (-ecefDevice.y*d.x + ecefDevice.x*d.y)/ sqrt((ecefDevice.x*ecefDevice.x + ecefDevice.y*ecefDevice.y)*(d.x*d.x+ d.y*d.y + d.z*d.z));
-    double azimuth = atan2(sinAzimuth, cosAzimuth);
+    float cosElev = (ecefDevice.x*d.x + ecefDevice.y*d.y + ecefDevice.z*d.z) /
+         sqrtf(x2y2 + powf(ecefDevice.z,2)*(dxyz2));
+    float elev = acosf(cosElev);
+    float degHorizonElev = 90 - (elev*180/M_PI);
+
+    float cosAzimuth = (-ecefDevice.z*ecefDevice.x*d.x - ecefDevice.z*ecefDevice.y*d.y + (x2y2)*d.z) 
+            / sqrtf((x2y2)*(x2y2+ecefDevice.z*ecefDevice.z)*(dxyz2));
+    float sinAzimuth = (-ecefDevice.y*d.x + ecefDevice.x*d.y)/ sqrtf((device2.y + device2.y)*(dxyz2));
+    float azimuth = atan2f(sinAzimuth, cosAzimuth);
 
     if( azimuth < 0)
     {
